@@ -44,6 +44,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ initialQuery, language }) =>
   // Speech Recognition & Text-to-Speech
   const [isListening, setIsListening] = useState(false);
   const [speakingMsgId, setSpeakingMsgId] = useState<string | null>(null);
+  const [autoSpeak, setAutoSpeak] = useState<boolean>(false);
   const recognitionRef = useRef<any>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -91,7 +92,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ initialQuery, language }) =>
     if (SpeechRecognition) {
       const recognition = new SpeechRecognition();
       recognition.continuous = false;
-      recognition.interimResults = false;
+      recognition.interimResults = true;
       recognition.lang = language === 'te' ? 'te-IN' : language === 'hi' ? 'hi-IN' : 'en-IN';
 
       recognition.onstart = () => setIsListening(true);
@@ -100,7 +101,10 @@ export const ChatView: React.FC<ChatViewProps> = ({ initialQuery, language }) =>
         const transcript = event.results[0][0].transcript;
         if (transcript) {
           setInputQuery(transcript);
-          handleSend(transcript);
+          // Only auto-send when the result is final
+          if (event.results[0].isFinal) {
+            handleSend(transcript);
+          }
         }
       };
       recognition.onerror = () => setIsListening(false);
@@ -190,6 +194,11 @@ export const ChatView: React.FC<ChatViewProps> = ({ initialQuery, language }) =>
       };
 
       setMessages((prev) => [...prev, aiMessage]);
+
+      // Auto-speak: read the AI answer aloud automatically
+      if (autoSpeak) {
+        setTimeout(() => speakText(aiMessage.id, aiMessage.content), 300);
+      }
     } catch (err: any) {
       const errorMessage: ChatMessage = {
         id: 'err_' + Date.now(),
@@ -205,6 +214,8 @@ export const ChatView: React.FC<ChatViewProps> = ({ initialQuery, language }) =>
 
   const startNewChat = () => {
     setSessionId('session_' + Date.now());
+    window.speechSynthesis.cancel();
+    setSpeakingMsgId(null);
     setMessages([
       {
         id: 'welcome_' + Date.now(),
@@ -246,6 +257,21 @@ export const ChatView: React.FC<ChatViewProps> = ({ initialQuery, language }) =>
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Auto-Speak Toggle */}
+          <button
+            type="button"
+            onClick={() => setAutoSpeak(!autoSpeak)}
+            className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border transition-all ${
+              autoSpeak
+                ? 'bg-amber-500 text-white border-amber-500 shadow-sm'
+                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+            }`}
+            title={autoSpeak ? 'Auto-speak ON — answers will be read aloud' : 'Auto-speak OFF — tap to enable'}
+          >
+            {autoSpeak ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
+            <span className="hidden sm:inline">{autoSpeak ? 'Voice ON' : 'Voice OFF'}</span>
+          </button>
+
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border transition-all ${
@@ -334,6 +360,15 @@ export const ChatView: React.FC<ChatViewProps> = ({ initialQuery, language }) =>
         </div>
       )}
 
+      {/* Listening Indicator Banner */}
+      {isListening && (
+        <div className="px-4 py-2 bg-red-50 border-b border-red-200 flex items-center gap-2 text-xs text-red-700 animate-pulse">
+          <Mic className="w-4 h-4" />
+          <span className="font-semibold">🎤 Listening... Speak your question now</span>
+          <button onClick={toggleListening} className="ml-auto text-red-600 hover:text-red-800 text-[10px] font-bold underline">Stop</button>
+        </div>
+      )}
+
       {/* Message Stream */}
       <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
         {messages.map((msg) => (
@@ -372,7 +407,11 @@ export const ChatView: React.FC<ChatViewProps> = ({ initialQuery, language }) =>
                   {msg.role === 'assistant' && (
                     <button
                       onClick={() => speakText(msg.id, msg.content)}
-                      className="p-1 rounded-md hover:bg-slate-200/60 text-slate-600 transition-colors"
+                      className={`p-1 rounded-md transition-colors ${
+                        speakingMsgId === msg.id
+                          ? 'bg-red-100 text-red-600'
+                          : 'hover:bg-slate-200/60 text-slate-600'
+                      }`}
                       title={speakingMsgId === msg.id ? 'Stop reading' : 'Read guidance aloud'}
                     >
                       {speakingMsgId === msg.id ? (

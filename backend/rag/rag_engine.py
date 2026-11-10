@@ -116,12 +116,37 @@ class RAGEngine:
         """
         Execute full RAG pipeline:
         1. Detect language
-        2. Retrieve grounded agricultural context chunks
-        3. Formulate RAG context payload
-        4. Generate response using Gemini API (or verified fallback)
-        5. Return grounded response, verified sources, and follow-up prompts.
+        2. Quick greeting check – return friendly static answer for casual salutations.
+        3. Retrieve grounded agricultural context chunks
+        4. Formulate RAG context payload
+        5. Generate response using Gemini API (or verified fallback)
+        6. Return grounded response, verified sources, and follow‑up prompts.
         """
+        # ------------ 1️⃣ Language detection ------------
         lang = language_override or self.detect_language(query)
+
+        # ------------ 2️⃣ Greeting shortcut ------------
+        # Simple greeting words (English, Hindi, Telugu) – case‑insensitive.
+        greeting_words = ["hi", "hello", "hey", "hii", "హాయ్", "నమస్కారం", "नमस्ते", "नमस्कार"]
+        if any(g.lower() in query.lower().split() for g in greeting_words):
+            # Return a friendly static markdown answer; no sources needed.
+            greeting_msg = {
+                "en": "Hello! 👋 I'm your Organic Farming Assistant. Ask me anything about organic crop cultivation, fertilizers, pest management, or local agricultural guidelines.",
+                "hi": "नमस्ते! मैं आपका ऑर्गेनिक खेती सहायक हूँ। आप ऑर्गेनिक कृषि, उर्वरक, कीट प्रबंधन या स्थानीय कृषि दिशानिर्देशों के बारे में कुछ भी पूछ सकते हैं।",
+                "te": "నమస్తే! నేను మీ ఆర్గానిక్ ఫార్మింగ్ సహాయకుడిని. మీరు ఆర్గానిక్ పొలాలు, ఎరువులు, పురుగుల నిర్వహణ లేదా ప్రాంతీయ వ్యవసాయ మార్గదర్శకాలు గురించి ఏదైనా అడగవచ్చు."
+            }
+            answer_text = f"# Answer\n\n{greeting_msg.get(lang, greeting_msg['en'])}\n\n## Sources"
+            return {
+                "query": query,
+                "answer": answer_text,
+                "language": lang,
+                "sources": [],
+                "retrieved_count": 0,
+                "used_llm": "Static greeting",
+                "suggested_questions": []
+            }
+
+        # ------------ 3️⃣ Continue with normal RAG flow ------------
         retrieved_chunks = self.retrieve_context(
             query=query,
             top_k=4,
@@ -194,12 +219,23 @@ Remember to follow all system rules:
         if self.api_key:
             try:
                 answer_text = self._call_gemini_api(user_content)
+                # Ensure the answer is formatted in a ChatGPT-style markdown layout
+                # (heading, bullet points, and a clear Sources section). If the model
+                # already returned markdown we keep it; otherwise we wrap it.
+                if not answer_text.lstrip().startswith("#"):
+                    answer_text = f"# Answer\n\n{answer_text.strip()}"
+                # Append a simple Sources header
+                answer_text = f"{answer_text}\n\n## Sources"
                 used_gemini = True
             except Exception as e:
                 print(f"[RAGEngine] Gemini API call failed: {e}. Using deterministic fallback synthesis.")
 
         if not answer_text:
             answer_text = self._synthesize_grounded_fallback(query, retrieved_chunks, lang)
+            # Format fallback answers too
+            if not answer_text.lstrip().startswith("#"):
+                answer_text = f"# Answer\n\n{answer_text.strip()}"
+            answer_text = f"{answer_text}\n\n## Sources"
 
         # Determine clarifying suggestions
         suggestions = self._generate_suggestions(query, crop_filter)
@@ -249,6 +285,16 @@ Remember to follow all system rules:
         structured instructions, and language localization when external LLM is offline.
         """
         if not chunks:
+            # No context – return a friendly message in markdown style
+            if lang == "te":
+                msg = "క్షమించండి, మీ ప్రశ్నకు సంబంధించిన ధృవీకరించబడిన వ్యవసాయ సమాచారం లభ్యం కాదు."
+            elif lang == "hi":
+                msg = "क्षमा करें, आपके प्रश्न के लिए हमारे सत्यापित ज्ञानकोष में पर्याप्त जानकारी उपलब्ध नहीं है।"
+            else:
+                msg = "I’m sorry, I couldn’t find verified information for your question."
+            answer_text = f"# Answer\n\n{msg}\n\n## Sources"
+            return answer_text
+
             if lang == "te":
                 return "క్షమించండి, మీ ప్రశ్నకు సంబంధించిన ధృవీకరించబడిన వ్యవసాయ సమాచారం మా నాలెడ్జ్ బేస్‌లో అందుబాటులో లేదు. దయచేసి మీ సమీప కృషి విజ్ఞాన కేంద్రం (KVK) లేదా వ్యవసాయ అధికారితో సంప్రదించండి."
             elif lang == "hi":

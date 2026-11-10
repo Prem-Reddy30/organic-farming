@@ -6,8 +6,6 @@ import { CropGuideView } from './components/CropGuideView';
 import { FertilizerGuideView } from './components/FertilizerGuideView';
 import { PestManagementView } from './components/PestManagementView';
 import { KnowledgeSourcesView } from './components/KnowledgeSourcesView';
-import { AdminDashboard } from './components/AdminDashboard';
-import { EvaluationDashboard } from './components/EvaluationDashboard';
 import { AuthModal } from './components/AuthModal';
 import { LoginPage } from './components/LoginPage';
 import { Language, UserProfile } from './types';
@@ -83,7 +81,7 @@ export function App() {
     );
   }
 
-  // Once user is logged in, show full application
+  // Once user is logged in, show the 6 core farmer tools
   return (
     <div className="min-h-screen bg-[#fcfdfa] text-slate-900 flex flex-col font-sans selection:bg-emerald-700 selection:text-white">
       {/* Top Navigation */}
@@ -125,17 +123,9 @@ export function App() {
         {currentTab === 'sources' && (
           <KnowledgeSourcesView language={language} />
         )}
-
-        {currentTab === 'admin' && (
-          <AdminDashboard language={language} />
-        )}
-
-        {currentTab === 'eval' && (
-          <EvaluationDashboard language={language} />
-        )}
       </main>
 
-      {/* Footer */}
+      {/* Clean Footer */}
       <footer className="bg-white border-t border-slate-200/90 py-8 text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
@@ -145,23 +135,16 @@ export function App() {
             <span className="font-extrabold text-forest text-sm">
               KisanJaivik <span className="text-agri-600">AI</span>
             </span>
-            <span className="text-slate-400">| Grounded Organic Agriculture RAG Pipeline</span>
+            <span className="text-slate-400">| Grounded Organic Agriculture RAG Assistant</span>
           </div>
 
           <div className="text-center sm:text-right space-y-0.5">
             <p>
               Knowledge groundings from ICAR, NCOF Ghaziabad, CRIDA, CICR, IIHR, and State Agricultural Universities.
             </p>
-            <div className="flex items-center justify-center sm:justify-end gap-3 pt-1 text-[11px] text-slate-400">
-              <span>For acute crop diseases, consult your local Krishi Vigyan Kendra (KVK).</span>
-              <span>•</span>
-              <button
-                onClick={() => setCurrentTab('admin')}
-                className="hover:text-forest underline transition-colors"
-              >
-                Staff Ingestion Hub
-              </button>
-            </div>
+            <p className="text-[11px] text-slate-400">
+              For acute crop disease outbreaks, always consult your local Krishi Vigyan Kendra (KVK).
+            </p>
           </div>
         </div>
       </footer>

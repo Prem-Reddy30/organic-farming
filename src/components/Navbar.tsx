@@ -6,8 +6,6 @@ import {
   FlaskConical,
   Bug,
   Database,
-  BarChart3,
-  ShieldCheck,
   Globe,
   User,
   LogOut
@@ -37,55 +35,43 @@ export const Navbar: React.FC<NavbarProps> = ({
     if (language === 'te') {
       switch (key) {
         case 'home': return 'హోమ్';
-        case 'chat': return 'AI సలహా';
-        case 'crops': return 'పంటలు';
-        case 'fertilizers': return 'ఎరువులు';
-        case 'pests': return 'తెగుళ్లు';
-        case 'sources': return 'సోర్సెస్';
-        case 'eval': return 'మూల్యాంకనం';
-        case 'admin': return 'అడ్మిన్';
+        case 'chat': return 'AI సలహాదారు';
+        case 'crops': return 'పంటల గైడ్';
+        case 'fertilizers': return 'సేంద్రీయ ఎరువులు';
+        case 'pests': return 'తెగుళ్ల నివారణ';
+        case 'sources': return 'నాలెడ్జ్ సోర్సెస్';
         default: return key;
       }
     } else if (language === 'hi') {
       switch (key) {
         case 'home': return 'होम';
-        case 'chat': return 'AI चैट';
-        case 'crops': return 'फसलें';
-        case 'fertilizers': return 'खाद';
+        case 'chat': return 'AI किसान चैट';
+        case 'crops': return 'फसल मार्गदर्शिका';
+        case 'fertilizers': return 'जैविक खाद';
         case 'pests': return 'कीट नियंत्रण';
-        case 'sources': return 'स्रोत';
-        case 'eval': return 'मूल्यांकन';
-        case 'admin': return 'प्रशासक';
+        case 'sources': return 'सत्यापित स्रोत';
         default: return key;
       }
     }
     switch (key) {
       case 'home': return 'Home';
       case 'chat': return 'AI Chat';
-      case 'crops': return 'Crops';
+      case 'crops': return 'Crop Guides';
       case 'fertilizers': return 'Fertilizers';
       case 'pests': return 'Pest Control';
       case 'sources': return 'Sources';
-      case 'eval': return 'Benchmark';
-      case 'admin': return 'Admin';
       default: return key;
     }
   };
 
-  const baseNavItems = [
+  const navItems = [
     { id: 'home', icon: Sprout, label: getNavLabel('home') },
     { id: 'chat', icon: MessageSquare, label: getNavLabel('chat') },
     { id: 'crops', icon: BookOpen, label: getNavLabel('crops') },
     { id: 'fertilizers', icon: FlaskConical, label: getNavLabel('fertilizers') },
     { id: 'pests', icon: Bug, label: getNavLabel('pests') },
     { id: 'sources', icon: Database, label: getNavLabel('sources') },
-    { id: 'eval', icon: BarChart3, label: getNavLabel('eval') },
   ];
-
-  // Only show Admin button if user has admin role
-  const navItems = user?.role === 'admin'
-    ? [...baseNavItems, { id: 'admin', icon: ShieldCheck, label: getNavLabel('admin') }]
-    : baseNavItems;
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-agri-100/90 shadow-xs">
@@ -115,7 +101,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-1 xl:gap-1.5">
+          <nav className="hidden lg:flex items-center gap-1.5 xl:gap-2">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = currentTab === item.id;
@@ -123,13 +109,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <button
                   key={item.id}
                   onClick={() => setCurrentTab(item.id)}
-                  className={`flex items-center gap-1.5 px-2.5 py-1.5 xl:px-3 xl:py-2 rounded-xl text-xs font-bold transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all ${
                     isActive
                       ? 'bg-agri-700 text-white shadow-xs'
                       : 'text-slate-600 hover:text-agri-800 hover:bg-agri-50'
                   }`}
                 >
-                  <Icon className={`w-3.5 h-3.5 xl:w-4 xl:h-4 ${isActive ? 'text-white' : 'text-agri-600'}`} />
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-agri-600'}`} />
                   <span>{item.label}</span>
                 </button>
               );
@@ -145,7 +131,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <button
                   key={lang}
                   onClick={() => setLanguage(lang)}
-                  className={`px-2 py-1 text-xs font-bold rounded-lg transition-all ${
+                  className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
                     language === lang
                       ? 'bg-white text-forest shadow-xs'
                       : 'text-slate-600 hover:text-forest'

@@ -41,11 +41,12 @@ export const CropGuideView: React.FC<CropGuideViewProps> = ({ language }) => {
     }).catch(console.error);
   }, []);
 
-  useEffect(() => {
-    if (selectedCrop) {
-      loadGuide();
-    }
-  }, [selectedCrop, selectedState, selectedSoil, selectedSeason]);
+  // Load guide on button click instead of on every selector change
+  // useEffect(() => {
+  //   if (selectedCrop) {
+  //     loadGuide();
+  //   }
+  // }, [selectedCrop, selectedState, selectedSoil, selectedSeason]);
 
   const loadGuide = async () => {
     setLoading(true);
@@ -192,6 +193,17 @@ export const CropGuideView: React.FC<CropGuideViewProps> = ({ language }) => {
         </div>
       )}
 
+      {/* Generate Guide Button */}
+      <div className="mt-4 flex justify-center">
+        <button
+          onClick={loadGuide}
+          disabled={loading}
+          className="px-5 py-2.5 rounded-xl bg-agri-700 text-white hover:bg-agri-800 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-semibold transition"
+        >
+          {loading ? (language === 'te' ? 'వివరణ జనరేట్ అవుతోంది…' : language === 'hi' ? 'निर्देश बन रहा है…' : 'Generating…')
+            : (language === 'te' ? 'మార్గదర్శిని సృష్టించు' : language === 'hi' ? 'मार्गदर्शिका बनाएं' : 'Generate Guide')}
+        </button>
+      </div>
       {/* Stage Navigation Tabs */}
       <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-none">
         {[
